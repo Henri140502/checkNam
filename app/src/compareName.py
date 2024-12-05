@@ -1,58 +1,80 @@
 import unicodedata
-from googletrans import Translator
+from googletrans import Translator      # Use this command to install the googletrans library : pip install googletrans==4.0.0-rc1
 import difflib
 
-# Fonction pour normaliser les noms (supprimer accents, mettre en minuscule)
 def normalize_name(name: str) -> str:
+    """
+    Normalize a given name by removing accents and converting it to lowercase.
+
+    Parameters:
+    name (str): The input name to be normalized.
+
+    Returns:
+    str: The normalized name.
+    """
     return ''.join(
         char for char in unicodedata.normalize('NFD', name)
         if unicodedata.category(char) != 'Mn'
     ).lower()
 
-# Fonction pour traduire un nom ou prénom dans une langue cible via Google Translate
-def translate_name_api(name: str, target_lang: str, src_lang:str) -> str:
+def translate_name_api(name: str, target_lang: str, src_lang: str) -> str:
+    """
+    Translate a given name from one language to another using Google Translate API.
+
+    Parameters:
+    name (str): The input name to be translated.
+    target_lang (str): The target language code (ISO 639-1) to translate the name into.
+    src_lang (str): The source language code (ISO 639-1) of the input name. If not provided, the API will auto-detect the language.
+
+    Returns:
+    str: The translated name. If an error occurs during translation, the original name is returned.
+    """
     translator = Translator()
     try:
-        # Traduction via l'API
         translated = translator.translate(name, dest=target_lang, src=src_lang).text
         return translated
     except Exception as e:
-        print(f"Erreur de traduction : {e}")
-        return name  # Retourne le nom original en cas d'erreur
+        print(f"Translation error: {e}")
+        return name
 
-# Fonction pour calculer la similarité avec Levenshtein (ou équivalent)
 def levenshtein_similarity(s1: str, s2: str) -> float:
     seq_matcher = difflib.SequenceMatcher(None, s1, s2)
     return seq_matcher.ratio()
 
-# Fonction pour évaluer la correspondance entre deux identités
 def compare_identities(
     name1: str, first_name1: str, lang1: str,
     name2: str, first_name2: str, lang2: str
 ) -> float:
-    # Normalisation
+    """
+    Compares two identities based on their names and first names, considering language translation and similarity metrics.
+
+    Parameters:
+    name1 (str): The name of the first identity.
+    first_name1 (str): The first name of the first identity.
+    lang1 (str): The language code (ISO 639-1) of the first identity's name and first name.
+    name2 (str): The name of the second identity.
+    first_name2 (str): The first name of the second identity.
+    lang2 (str): The language code (ISO 639-1) of the second identity's name and first name.
+
+    Returns:
+    float: A percentage representing the similarity between the two identities based on their names and first names.
+    """
     name1, first_name1 = normalize_name(name1), normalize_name(first_name1)
     name2, first_name2 = normalize_name(name2), normalize_name(first_name2)
 
-    # Traduction des noms dans la langue de "lang1"
     name2_translated = translate_name_api(name2, target_lang=lang1, src_lang=lang2)
     first_name2_translated = translate_name_api(first_name2, target_lang=lang1, src_lang=lang2)
 
-    # Similarité sur les noms
     name_similarity = levenshtein_similarity(name1, normalize_name(name2_translated))
-    # Similarité sur les prénoms
     first_name_similarity = levenshtein_similarity(first_name1, normalize_name(first_name2_translated))
 
-    # Calcul du score global (poids égal pour noms et prénoms)
     overall_similarity = (name_similarity + first_name_similarity) / 2
 
-    # Convertir en pourcentage
     return round(overall_similarity * 100, 2)
 
 # Fonction principale (interaction utilisateur)
 def main():
     print("Entrez les informations pour les deux identités :")
-    # Entrée des identités
     """
     name1 = input("Nom 1 : ").strip()
     first_name1 = input("Prénom 1 : ").strip()
@@ -68,10 +90,8 @@ def main():
     name2 = "Henry"
     first_name2 = "Charonnet"
     lang2 = "en"
-    # Calcul de la probabilité
     probability = compare_identities(name1, first_name1, lang1, name2, first_name2, lang2)
 
-    # Résultat
     print(f"Probabilité que les deux identités appartiennent à la même personne : {probability} %")
 
 if __name__ == "__main__":
