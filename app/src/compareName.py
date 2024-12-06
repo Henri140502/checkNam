@@ -2,7 +2,7 @@ import unicodedata
 from googletrans import Translator, LANGUAGES      # Use this command to install the googletrans library : pip install googletrans==4.0.0-rc1
 import difflib
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import messagebox
 
 def normalize_name(name: str) -> str:
     """
@@ -101,44 +101,56 @@ def launch_ui():
 
     root = tk.Tk()
     root.title("Comparaison d'identités")
+    root.geometry("600x400")
 
     lang_options = sorted(LANGUAGES.keys())
 
-    tk.Label(root, text="Nom 1").grid(row=0, column=0, padx=10, pady=5, sticky=tk.W)
-    name1_entry = tk.Entry(root, width=30)
-    name1_entry.grid(row=0, column=1, padx=10, pady=5)
+    root.columnconfigure(0, weight=1)
+    root.columnconfigure(1, weight=3)
+    for row in range(8):
+        root.rowconfigure(row, weight=1)
 
-    tk.Label(root, text="Prénom 1").grid(row=1, column=0, padx=10, pady=5, sticky=tk.W)
+    tk.Label(root, text="Nom 1").grid(row=0, column=0, padx=10, pady=5, sticky=tk.E)
+    name1_entry = tk.Entry(root)
+    name1_entry.grid(row=0, column=1, padx=10, pady=5, sticky=tk.E+tk.W)
+
+    tk.Label(root, text="Prénom 1").grid(row=1, column=0, padx=10, pady=5, sticky=tk.E)
     first_name1_entry = tk.Entry(root, width=30)
-    first_name1_entry.grid(row=1, column=1, padx=10, pady=5)
+    first_name1_entry.grid(row=1, column=1, padx=10, pady=5, sticky=tk.E+tk.W)
 
-    tk.Label(root, text="Langue 1 :").grid(row=2, column=0, padx=10, pady=5, sticky=tk.W)
+    tk.Label(root, text="Langue 1 :").grid(row=2, column=0, padx=10, pady=5, sticky=tk.E)
     lang1_entry = tk.Entry(root, width=30)
-    lang1_entry.grid(row=2, column=1, padx=10, pady=5)
+    lang1_entry.grid(row=2, column=1, padx=10, pady=5, sticky=tk.E+tk.W)
 
-    lang1_listbox = tk.Listbox(root, height=5, width=30)
-    lang1_listbox.grid(row=3, column=1, padx=10, pady=5)
+    lang1_listbox = tk.Listbox(root, height=5)
+    lang1_listbox.grid(row=3, column=1, padx=10, pady=5, sticky=tk.E+tk.W)
+    lang1_scroll = tk.Scrollbar(root, orient=tk.VERTICAL, command=lang1_listbox.yview)
+    lang1_listbox.config(yscrollcommand=lang1_scroll.set)
+    lang1_scroll.grid(row=3, column=2, padx=10, sticky=tk.N+tk.S)
     lang1_entry.bind('<KeyRelease>', lambda event: update_language_list(lang1_entry, lang1_listbox, lang_options))
     lang1_listbox.bind('<ButtonRelease-1>', lambda event: select_language(event, lang1_entry, lang1_listbox))
 
-    tk.Label(root, text="Nom 2").grid(row=3, column=0, padx=10, pady=5, sticky=tk.W)
-    name2_entry = tk.Entry(root, width=30)
-    name2_entry.grid(row=3, column=1, padx=10, pady=5)
+    tk.Label(root, text="Nom 2 :").grid(row=4, column=0, padx=10, pady=5, sticky=tk.E)
+    name2_entry = tk.Entry(root)
+    name2_entry.grid(row=4, column=1, padx=10, pady=5, sticky=tk.W + tk.E)
 
-    tk.Label(root, text="Prénom 2").grid(row=4, column=0, padx=10, pady=5, sticky=tk.W)
-    first_name2_entry = tk.Entry(root, width=30)
-    first_name2_entry.grid(row=4, column=1, padx=10, pady=5)
+    tk.Label(root, text="Prénom 2 :").grid(row=5, column=0, padx=10, pady=5, sticky=tk.E)
+    first_name2_entry = tk.Entry(root)
+    first_name2_entry.grid(row=5, column=1, padx=10, pady=5, sticky=tk.W + tk.E)
 
-    tk.Label(root, text="Langue 2 :").grid(row=6, column=0, padx=10, pady=5, sticky=tk.W)
-    lang2_entry = tk.Entry(root, width=30)
-    lang2_entry.grid(row=6, column=1, padx=10, pady=5)
+    tk.Label(root, text="Langue 2 :").grid(row=6, column=0, padx=10, pady=5, sticky=tk.E)
+    lang2_entry = tk.Entry(root)
+    lang2_entry.grid(row=6, column=1, padx=10, pady=5, sticky=tk.W + tk.E)
 
-    lang2_listbox = tk.Listbox(root, height=5, width=30)
-    lang2_listbox.grid(row=7, column=1, padx=10, pady=5)
+    lang2_listbox = tk.Listbox(root, height=5)
+    lang2_listbox.grid(row=7, column=1, padx=10, pady=5, sticky=tk.W + tk.E)
+    lang2_scroll = tk.Scrollbar(root, orient=tk.VERTICAL, command=lang2_listbox.yview)
+    lang2_listbox.configure(yscrollcommand=lang2_scroll.set)
+    lang2_scroll.grid(row=7, column=2, sticky=tk.N + tk.S)
     lang2_entry.bind('<KeyRelease>', lambda event: update_language_list(lang2_entry, lang2_listbox, lang_options))
     lang2_listbox.bind('<ButtonRelease-1>', lambda event: select_language(event, lang2_entry, lang2_listbox))
 
-    tk.Button(root, text="Calculer", command=calculate_similarity).grid(row=6, column=1, padx=10, pady=5)
+    tk.Button(root, text="Calculer", command=calculate_similarity).grid(row=8, columnspan=3, pady=10, sticky=tk.E+tk.W)
 
     root.mainloop()
 
