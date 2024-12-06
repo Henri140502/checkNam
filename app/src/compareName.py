@@ -1,6 +1,4 @@
 import unicodedata
-
-import googletrans
 from googletrans import Translator, LANGUAGES      # Use this command to install the googletrans library : pip install googletrans==4.0.0-rc1
 import difflib
 import tkinter as tk
@@ -62,33 +60,34 @@ def compare_identities(name1: str, first_name1: str, lang1: str, name2: str, fir
     """
     name1, first_name1 = normalize_name(name1), normalize_name(first_name1)
     name2, first_name2 = normalize_name(name2), normalize_name(first_name2)
-
     name2_translated = translate_name_api(name2, target_lang=lang1, src_lang=lang2)
     first_name2_translated = translate_name_api(first_name2, target_lang=lang1, src_lang=lang2)
-
     name_similarity = levenshtein_similarity(name1, normalize_name(name2_translated))
     first_name_similarity = levenshtein_similarity(first_name1, normalize_name(first_name2_translated))
-
     overall_similarity = (name_similarity + first_name_similarity) / 2
-
     return round(overall_similarity * 100, 2)
 
-def filter_languages(event, combobox, lang_options):
-    search_term = combobox.get().lower()
-    filtered_options = [lang for lang in lang_options if lang.startswith(search_term)]
-    combobox["values"] = filtered_options
-    combobox.event_generate("<Down>")
-
-
 def launch_ui():
+    def update_language_list(entry, listbox, lang_options):
+        search_term = entry.get().lower()
+        listbox.delete(0, tk.END)
+        filtered_languages = [lang for lang in lang_options if lang.startswith(search_term)]
+        for lang in filtered_languages:
+            listbox.insert(tk.END, lang)
+
+    def select_language(event, entry, listbox):
+        selection = listbox.get(tk.ACTIVE)
+        entry.delete(0, tk.END)
+        entry.insert(0, selection)
+
     def calculate_similarity():
         name1 = name1_entry.get().strip()
         first_name1 = first_name1_entry.get().strip()
-        lang1 = lang1_combobox.get()
+        lang1 = lang1_entry.get().strip()
 
         name2 = name2_entry.get().strip()
         first_name2 = first_name2_entry.get().strip()
-        lang2 = lang2_combobox.get()
+        lang2 = lang2_entry.get().strip()
 
         if not ([name1, first_name1, name2, first_name2]):
             messagebox.showerror("Error", "Please enter the following fields: Name 1, First name 1, Name 2 and First name 2")
@@ -113,10 +112,14 @@ def launch_ui():
     first_name1_entry = tk.Entry(root, width=30)
     first_name1_entry.grid(row=1, column=1, padx=10, pady=5)
 
-    tk.Label(root, text="Langue 1").grid(row=2, column=0, padx=10, pady=5, sticky=tk.W)
-    lang1_combobox = ttk.Combobox(root, values=lang_options, width=30)
-    lang1_combobox.grid(row=2, column=1, padx=10, pady=5)
-    lang1_combobox.bind('<KeyRelease>', lambda event: filter_languages(event, lang1_combobox, lang_options))
+    tk.Label(root, text="Langue 1 :").grid(row=2, column=0, padx=10, pady=5, sticky=tk.W)
+    lang1_entry = tk.Entry(root, width=30)
+    lang1_entry.grid(row=2, column=1, padx=10, pady=5)
+
+    lang1_listbox = tk.Listbox(root, height=5, width=30)
+    lang1_listbox.grid(row=3, column=1, padx=10, pady=5)
+    lang1_entry.bind('<KeyRelease>', lambda event: update_language_list(lang1_entry, lang1_listbox, lang_options))
+    lang1_listbox.bind('<ButtonRelease-1>', lambda event: select_language(event, lang1_entry, lang1_listbox))
 
     tk.Label(root, text="Nom 2").grid(row=3, column=0, padx=10, pady=5, sticky=tk.W)
     name2_entry = tk.Entry(root, width=30)
@@ -126,10 +129,14 @@ def launch_ui():
     first_name2_entry = tk.Entry(root, width=30)
     first_name2_entry.grid(row=4, column=1, padx=10, pady=5)
 
-    tk.Label(root, text="Langue 2").grid(row=5, column=0, padx=10, pady=5, sticky=tk.W)
-    lang2_combobox = ttk.Combobox(root, values=lang_options, width=30)
-    lang2_combobox.grid(row=5, column=1, padx=10, pady=5)
-    lang2_combobox.bind('<KeyRelease>', lambda event: filter_languages(event, lang2_combobox, lang_options))
+    tk.Label(root, text="Langue 2 :").grid(row=6, column=0, padx=10, pady=5, sticky=tk.W)
+    lang2_entry = tk.Entry(root, width=30)
+    lang2_entry.grid(row=6, column=1, padx=10, pady=5)
+
+    lang2_listbox = tk.Listbox(root, height=5, width=30)
+    lang2_listbox.grid(row=7, column=1, padx=10, pady=5)
+    lang2_entry.bind('<KeyRelease>', lambda event: update_language_list(lang2_entry, lang2_listbox, lang_options))
+    lang2_listbox.bind('<ButtonRelease-1>', lambda event: select_language(event, lang2_entry, lang2_listbox))
 
     tk.Button(root, text="Calculer", command=calculate_similarity).grid(row=6, column=1, padx=10, pady=5)
 
