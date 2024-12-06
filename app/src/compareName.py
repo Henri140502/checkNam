@@ -1,6 +1,10 @@
 import unicodedata
+
+import googletrans
 from googletrans import Translator      # Use this command to install the googletrans library : pip install googletrans==4.0.0-rc1
 import difflib
+import tkinter as tk
+from tkinter import messagebox, ttk
 
 def normalize_name(name: str) -> str:
     """
@@ -34,7 +38,7 @@ def translate_name_api(name: str, target_lang: str, src_lang: str) -> str:
         translated = translator.translate(name, dest=target_lang, src=src_lang).text
         return translated
     except Exception as e:
-        print(f"Translation error: {e}")
+        print(f"Translation error: The probabilistic calculation will be done without translation, the result can be affected")
         return name
 
 def levenshtein_similarity(s1: str, s2: str) -> float:
@@ -42,9 +46,7 @@ def levenshtein_similarity(s1: str, s2: str) -> float:
     return seq_matcher.ratio()
 
 def compare_identities(
-    name1: str, first_name1: str, lang1: str,
-    name2: str, first_name2: str, lang2: str
-) -> float:
+    name1: str, first_name1: str, lang1: str, name2: str, first_name2: str, lang2: str) -> float:
     """
     Compares two identities based on their names and first names, considering language translation and similarity metrics.
 
@@ -72,27 +74,58 @@ def compare_identities(
 
     return round(overall_similarity * 100, 2)
 
-# Fonction principale (interaction utilisateur)
-def main():
-    print("Entrez les informations pour les deux identités :")
-    """
-    name1 = input("Nom 1 : ").strip()
-    first_name1 = input("Prénom 1 : ").strip()
-    lang1 = input("Langue 1 (code ISO, ex. 'fr') : ").strip()
+def launch_ui():
+    def calculate_similarity():
+        name1 = name1_entry.get().strip()
+        first_name1 = first_name1_entry.get().strip()
+        lang1 = lang1_combobox.get()
 
-    name2 = input("Nom 2 : ").strip()
-    first_name2 = input("Prénom 2 : ").strip()
-    lang2 = input("Langue 2 (code ISO, ex. 'en') : ").strip()
-    """
-    name1 = "Henri"
-    first_name1 = "Charonnet"
-    lang1 = "fr"
-    name2 = "Henry"
-    first_name2 = "Charonnet"
-    lang2 = "en"
-    probability = compare_identities(name1, first_name1, lang1, name2, first_name2, lang2)
+        name2 = name2_entry.get().strip()
+        first_name2 = first_name2_entry.get().strip()
+        lang2 = lang2_combobox.get()
 
-    print(f"Probabilité que les deux identités appartiennent à la même personne : {probability} %")
+        if not ([name1, first_name1, lang1, name2, first_name2, lang2]):
+            messagebox.showerror("Error", "Please enter all fields")
+            return
+
+        try:
+            similarity = compare_identities(name1, first_name1, lang1, name2, first_name2, lang2)
+            messagebox.showinfo("Résultat", f"La probabilité que les deux identités appartiennent à la même personne est de {similarity} %")
+        except Exception as e:
+            messagebox.showerror("Erreur", f"Une erreur s'est produite : {str(e)}")
+
+    root = tk.Tk()
+    root.title("Comparaison d'identités")
+
+    lang_options = list(googletrans.LANGUAGES.keys())
+
+    tk.Label(root, text="Nom 1").grid(row=0, column=0, padx=10, pady=5, sticky=tk.W)
+    name1_entry = tk.Entry(root, width=30)
+    name1_entry.grid(row=0, column=1, padx=10, pady=5)
+
+    tk.Label(root, text="Prénom 1").grid(row=1, column=0, padx=10, pady=5, sticky=tk.W)
+    first_name1_entry = tk.Entry(root, width=30)
+    first_name1_entry.grid(row=1, column=1, padx=10, pady=5)
+
+    tk.Label(root, text="Langue 1").grid(row=2, column=0, padx=10, pady=5, sticky=tk.W)
+    lang1_combobox = ttk.Combobox(root, values=lang_options, width=30)
+    lang1_combobox.grid(row=2, column=1, padx=10, pady=5)
+
+    tk.Label(root, text="Nom 2").grid(row=3, column=0, padx=10, pady=5, sticky=tk.W)
+    name2_entry = tk.Entry(root, width=30)
+    name2_entry.grid(row=3, column=1, padx=10, pady=5)
+
+    tk.Label(root, text="Prénom 2").grid(row=4, column=0, padx=10, pady=5, sticky=tk.W)
+    first_name2_entry = tk.Entry(root, width=30)
+    first_name2_entry.grid(row=4, column=1, padx=10, pady=5)
+
+    tk.Label(root, text="Langue 2").grid(row=5, column=0, padx=10, pady=5, sticky=tk.W)
+    lang2_combobox = ttk.Combobox(root, values=lang_options, width=30)
+    lang2_combobox.grid(row=5, column=1, padx=10, pady=5)
+
+    tk.Button(root, text="Calculer", command=calculate_similarity).grid(row=6, column=1, padx=10, pady=5)
+
+    root.mainloop()
 
 if __name__ == "__main__":
-    main()
+    launch_ui()
