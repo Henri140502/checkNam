@@ -1,7 +1,7 @@
 import unicodedata
 
 import googletrans
-from googletrans import Translator      # Use this command to install the googletrans library : pip install googletrans==4.0.0-rc1
+from googletrans import Translator, LANGUAGES      # Use this command to install the googletrans library : pip install googletrans==4.0.0-rc1
 import difflib
 import tkinter as tk
 from tkinter import messagebox, ttk
@@ -38,15 +38,14 @@ def translate_name_api(name: str, target_lang: str, src_lang: str) -> str:
         translated = translator.translate(name, dest=target_lang, src=src_lang).text
         return translated
     except Exception as e:
-        print(f"Translation error: The probabilistic calculation will be done without translation, the result can be affected")
+        print(f"Translation error: The probabilistic calculation will be done without translation, the result can be affected \n {e}")
         return name
 
 def levenshtein_similarity(s1: str, s2: str) -> float:
     seq_matcher = difflib.SequenceMatcher(None, s1, s2)
     return seq_matcher.ratio()
 
-def compare_identities(
-    name1: str, first_name1: str, lang1: str, name2: str, first_name2: str, lang2: str) -> float:
+def compare_identities(name1: str, first_name1: str, lang1: str, name2: str, first_name2: str, lang2: str) -> float:
     """
     Compares two identities based on their names and first names, considering language translation and similarity metrics.
 
@@ -74,6 +73,13 @@ def compare_identities(
 
     return round(overall_similarity * 100, 2)
 
+def filter_languages(event, combobox, lang_options):
+    search_term = combobox.get().lower()
+    filtered_options = [lang for lang in lang_options if lang.startswith(search_term)]
+    combobox["values"] = filtered_options
+    combobox.event_generate("<Down>")
+
+
 def launch_ui():
     def calculate_similarity():
         name1 = name1_entry.get().strip()
@@ -84,8 +90,8 @@ def launch_ui():
         first_name2 = first_name2_entry.get().strip()
         lang2 = lang2_combobox.get()
 
-        if not ([name1, first_name1, lang1, name2, first_name2, lang2]):
-            messagebox.showerror("Error", "Please enter all fields")
+        if not ([name1, first_name1, name2, first_name2]):
+            messagebox.showerror("Error", "Please enter the following fields: Name 1, First name 1, Name 2 and First name 2")
             return
 
         try:
@@ -97,7 +103,7 @@ def launch_ui():
     root = tk.Tk()
     root.title("Comparaison d'identités")
 
-    lang_options = list(googletrans.LANGUAGES.keys())
+    lang_options = sorted(LANGUAGES.keys())
 
     tk.Label(root, text="Nom 1").grid(row=0, column=0, padx=10, pady=5, sticky=tk.W)
     name1_entry = tk.Entry(root, width=30)
@@ -110,6 +116,7 @@ def launch_ui():
     tk.Label(root, text="Langue 1").grid(row=2, column=0, padx=10, pady=5, sticky=tk.W)
     lang1_combobox = ttk.Combobox(root, values=lang_options, width=30)
     lang1_combobox.grid(row=2, column=1, padx=10, pady=5)
+    lang1_combobox.bind('<KeyRelease>', lambda event: filter_languages(event, lang1_combobox, lang_options))
 
     tk.Label(root, text="Nom 2").grid(row=3, column=0, padx=10, pady=5, sticky=tk.W)
     name2_entry = tk.Entry(root, width=30)
@@ -122,6 +129,7 @@ def launch_ui():
     tk.Label(root, text="Langue 2").grid(row=5, column=0, padx=10, pady=5, sticky=tk.W)
     lang2_combobox = ttk.Combobox(root, values=lang_options, width=30)
     lang2_combobox.grid(row=5, column=1, padx=10, pady=5)
+    lang2_combobox.bind('<KeyRelease>', lambda event: filter_languages(event, lang2_combobox, lang_options))
 
     tk.Button(root, text="Calculer", command=calculate_similarity).grid(row=6, column=1, padx=10, pady=5)
 
